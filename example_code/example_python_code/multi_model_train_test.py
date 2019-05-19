@@ -1,18 +1,14 @@
 #!/usr/bin/env python
 # coding=utf-8
 
-# This file handles the parallelization of training using Apache Beam and
-# Google Cloud Platform Dataflow
+# This file handles the parallelization of training
 
-# Handles Python 2 for Apache Beam
 from __future__ import unicode_literals
 
 # System Libraries
 import itertools
 import uuid
 import json
-import random
-import string
 
 # Third Party Libraries
 import apache_beam as beam
@@ -22,34 +18,35 @@ import tensorflow as tf
 from sklearn.model_selection import cross_validate
 from apache_beam.io import WriteToText
 
-# My Libraries
-from utils import read_parameters_json
+import random
+import string
 
 
 class MultiModelTrain():
 
-    def __init__(self, json_file="None"):
+    def __init__(self):
 
-        if json_file:
+        self.options = beam.options.pipeline_options.PipelineOptions()
 
-            # Get all the parameters of the JSON configuration file
-            self.params = read_parameters_json(json_file)
-            self.options = beam.options.pipeline_options.PipelineOptions()
+        # Google Cloud possible options
+        self.google_cloud_options = self.options.view_as(beam.options.pipeline_options.GoogleCloudOptions)
+        self.google_cloud_options.project = 'multi-model-dataflow'
+        self.google_cloud_options.job_name = 'multi-mode-dataflow-example'
+        #self.google_cloud_options.staging_location = 'gs://{BUCKET_NAME}/binaries'
+        #self.google_cloud_options.temp_location = 'gs://{BUCKET_NAME}/temp'
+        self.google_cloud_options.staging_location = 'gs://multi_model_bucket/binaries'
+        self.google_cloud_options.temp_location = 'gs://multi_model_bucket/temp'
+        # Apache Beam Worker Optiosn
+        self.worker_options = self.options.view_as(beam.options.pipeline_options.WorkerOptions)
+        self.worker_options.max_num_workers = 6
+        self.worker_options.num_workers = 6
+        self.worker_options.disk_size_gb = 100
+        # worker_options.machine_type = 'n1-standard-16'
 
-            # Google Cloud possible options
-            self.google_cloud_options = self.options.view_as(beam.options.pipeline_options.GoogleCloudOptions)
-            self.google_cloud_options.project = params['google_cloud_project_name']
-            self.google_cloud_options.job_name = params['google_cloud_job_name']
-            self.google_cloud_options.staging_location = parmas['google_cloud_bucket_staging']
-            self.google_cloud_options.temp_location = params['google_cloud_bucket_temp']
+        # options.view_as(beam.utils.pipeline_options.StandardOptions).runner = 'DirectRunner'
+        self.options.view_as(beam.options.pipeline_options.StandardOptions).runner = 'DataflowRunner'
 
-            # Apache Beam Worker Options
-            self.worker_options = self.options.view_as(beam.options.pipeline_options.WorkerOptions)
-            self.worker_options.max_num_workers = params['google_dataflow_max_workers']
-            self.worker_options.num_workers = params['google_dataflow_workers']
-            self.worker_options.disk_size_gb = params['google_dataflow_disk_gb']
-            self.options.view_as(beam.options.pipeline_options.StandardOptions).runner = params['google_dataflow_runner']
-            self.p = beam.Pipeline(options=self.options)
+        self.p = beam.Pipeline(options=self.options)
 
     def set_parameters(self, params):
 
@@ -85,14 +82,14 @@ class MultiModelTrain():
         print("Loading Iris Data")
         iris = tf.contrib.learn.datasets.base.load_iris()
         train_x, test_x, train_y, test_y = train_test_split(
-            iris.data, iris.target, test_size=params["test_size"], random_state=0
+            iris.data, iris.target, test_size=0.2, random_state=0
         )
 
         # https://www.tensorflow.org/get_started/tflearn
         feature_columns = [tf.contrib.layers.real_valued_column("", dimension=4)]
         classifier = tf.contrib.learn.DNNClassifier(feature_columns=feature_columns,
-                                                    hidden_units=params["hidden_units"],
-                                                    dropout=params["dropout"],
+                                                    hidden_units=param["hidden_units"],
+                                                    dropout=param["dropout"],
                                                     n_classes=3,
                                                     model_dir="gs://multi_model_bucket/models/%s"% model_id)
 
@@ -100,7 +97,7 @@ class MultiModelTrain():
         classifier.fit(x=train_x,
                        y=train_y,
                        steps=param["steps"],
-                       batch_size=params["batch_size"])
+                       batch_size=50)
 
         result = classifier.evaluate(x=test_x, y=test_y)
 

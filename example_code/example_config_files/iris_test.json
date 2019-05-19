@@ -1,17 +1,21 @@
 {
-  "google_cloud_project": "iris_test",
-  "google_job_name": "iris_job",
-  "google_bucket_name": "iris_bucket",
+  "google_cloud_project_name": "iris_test",
+  "google_cloud_job_name": "iris_job",
+  "google_cloud_bucket_name": "iris_bucket",
+  "google_cloud_bucket_staging": "gs://multi_model_bucket/binaries",
+  "google_cloud_bucket_temp": "gs//multi_model_bucket/temp",
+  "google_cloud_bucket_model": "gs//multi_model_bucket/models/",
   "google dataflow_runner": "DataflowRunner",
   "google_dataflow_max_workers": "1",
   "google_dataflow_workers": "1",
   "google_dataflow_disk_gb": 5,
-  "google_bucket_staging_location": "iris_bucket/staging",
-  "google_bucket_temp_location": "iris_bucket/temp",
+  "google_big_query_table_id": "multi-model-dataflow:dataset.example_set",
+  "google_big_query_schema": "accuracy:FLOAT, loss:FLOAT, model_id:STRING, param:STRING",
   "model_name": "iris_model",
   "model_dir": "iris_bucket_model",
   "hidden_units": [[10, 20, 10], [20, 40, 20], [100, 200, 100]],
   "dropout": [0.1, 0.2, 0.5, 0.8],
-  "steps": [20000, 50000, 100000]
+  "steps": [20000, 50000, 100000],
+  "batch_size": 50,
+  "test_size": 0.2
 }
- 

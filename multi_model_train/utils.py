@@ -8,10 +8,10 @@ def read_parameters_json(json_file):
     """Read the parameters for training a model from a JSON file
 
     Args:
-        json_file (json):
+        json_file (json): configuration of the model you want to train
 
     Return:
-        params (dict):
+        params (dict): all the read paramters from the JSON file
 
     """
 
@@ -28,7 +28,7 @@ def read_parameters_yaml(yaml_file):
 def return_json_file(raw_json, file_name):
 
     """Returns nicely formated json file as .json. Used for debugging.
-    
+
     Args:
         param raw_json(dict):    Takes in a json dict.
         param file_name(string): Name of the file name you want to write too.
